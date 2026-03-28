@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #0f0f0f;
+            color: #ffffff;
+            font-size: 1rem;
+            margin-bottom: 14px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #555;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .submit-btn:hover {
+            background: #dddddd;
+        }
+
+        .error {
+            background: #2a1a1a;
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .urls-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .urls-table th {
+            text-align: left;
+            padding: 12px;
+            color: #888;
+            font-weight: normal;
+            border-bottom: 1px solid #333;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .urls-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #222;
+            font-size: 0.9rem;
+        }
+
+        .urls-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .short-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .short-link:hover {
+            text-decoration: underline;
+        }
+
+        .short-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .short-link {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid #444;
+            color: #aaa;
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            width: auto;
+            font-weight: normal;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .copy-btn:hover {
+            border-color: #fff;
+            color: #fff;
+            background: none;
+        }
+
+        .copy-btn.copied {
+            border-color: #44bb44;
+            color: #44bb44;
+        }
+
+        .long-url {
+            color: #888;
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .clicks {
+            color: #888;
+        }
+
+        .delete-btn {
+            background: none;
+            border: 1px solid #333;
+            color: #888;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            width: auto;
+            font-weight: normal;
+        }
+
+        .delete-btn:hover {
+            border-color: #ff4444;
+            color: #ff4444;
+            background: none;
+        }
+
+        .empty {
+            text-align: center;
+            color: #555;
+            padding: 30px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <h1>URL Shortener</h1>
+        <p class="subtitle">Paste a long URL and get a short one</p>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <div class="card">
+            <form action="/shorten" method="POST">
+                <input
+                    type="text"
+                    name="long_url"
+                    placeholder="Paste your long URL here..."
+                    required
+                >
+                <button type="submit" class="submit-btn">Shorten URL</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <p class="section-title">Your shortened URLs</p>
+
+            {% if urls %}
+            <table class="urls-table">
+                <thead>
+                    <tr>
+                        <th>Short Link</th>
+                        <th>Original URL</th>
+                        <th>Clicks</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for short_code, long_url, clicks in urls %}
+                    <tr>
+                        <td>
+                            <div class="short-cell">
+                                <a class="short-link" href="/{{ short_code }}" target="_blank">
+                                    {{ request.host }}/{{ short_code }}
+                                </a>
+                                <button class="copy-btn" onclick="copyUrl(this, '{{ request.scheme }}://{{ request.host }}/{{ short_code }}')">Copy</button>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="long-url" title="{{ long_url }}">
+                                {{ long_url }}
+                            </span>
+                        </td>
+                        <td class="clicks">{{ clicks }}</td>
+                        <td>
+                            <form action="/delete/{{ short_code }}" method="POST">
+                                <button class="delete-btn" type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty">No URLs shortened yet</p>
+            {% endif %}
+        </div>
+
+    </div>
+    <script>
+        function copyUrl(btn, url) {
+            navigator.clipboard.writeText(url).then(() => {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
