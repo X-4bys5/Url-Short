@@ -3,3 +3,4 @@ venv/
 __pycache__/
 urls.db
 *.pyc
+.idea
