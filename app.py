@@ -27,7 +27,7 @@ def init_db():
 def generate_short_code(length=6):
     characters = string.ascii_letters + string.digits
     while True:
-        code = ''.join(random.choice(characters) for _ in range(length))
+        code = ''.join(random.choice(characters) for _ in range(length))  # keep trying until we get a code thats not already taken
         conn = sqlite3.connect(DB)
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM urls WHERE short_code = ?", (code,))
@@ -54,6 +54,7 @@ def shorten():
     if not long_url:
         return jsonify({'error': 'No long url provided.'}), 400
 
+    # add https if they didnt include it
     if not long_url.startswith('http://') and not long_url.startswith('https://'):
         long_url = 'https://' + long_url
 
