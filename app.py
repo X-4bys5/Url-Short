@@ -80,6 +80,8 @@ def redirect_url(short_code):
         conn.close()
         return render_template('index.html', error="Short link not found"), 404
 
+    # increment click counter every time the short link is visited
+    
     cursor.execute("UPDATE urls SET clicks = clicks + 1 WHERE short_code = ?",
                    (short_code,))
     conn.commit()
